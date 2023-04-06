@@ -4,9 +4,10 @@ import { SignInButton, SignOutButton, useUser} from "@clerk/nextjs";
 import { api } from "~/utils/api";
 
 const Home: NextPage = () => {
-  const hello = api.example.hello.useQuery({ text: "from tRPC" });
-  const {isSignedIn} = useUser()
+  const { data } = api.post.getAll.useQuery();
+  const { isSignedIn } = useUser()
 
+  console.log(data)
   return (
     <>
       <Head>
@@ -20,6 +21,10 @@ const Home: NextPage = () => {
         </SignInButton>}
 
         {!!isSignedIn && <SignOutButton />}
+
+        {data?.map(post => (<div key={post.id}>
+          {post.content}
+        </div>))}
       </main>
     </>
   );
