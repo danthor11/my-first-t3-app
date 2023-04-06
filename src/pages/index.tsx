@@ -5,22 +5,30 @@ import { RouterOutputs, api } from "~/utils/api";
 import relativeTime from "dayjs/plugin/relativeTime";
 import dayjs from "dayjs";
 import Image from "next/image";
-import { LoadingPage } from "~/components/loading";
+import { LoadingPage, LoadingSpinner } from '~/components/loading';
 import { useState } from "react";
+import { toast } from "react-hot-toast";
 
 dayjs.extend(relativeTime);
 
 const CreatePostWizard = () => {
   const { user } = useUser();
 
-  const ctx = api.useContext()
-  const { mutate , isLoading: posting} = api.post.create.useMutation({
-    onSuccess: async () => {
-      setInput("")
-      await ctx.post.getAll.invalidate()
-    }
-  });
+  const ctx = api.useContext();
 
+  const { mutate, isLoading: posting } = api.post.create.useMutation({
+    onSuccess: async () => {
+      setInput("");
+      await ctx.post.getAll.invalidate();
+    },
+    onError(e) {
+      const errorMessage = e.data?.zodError?.fieldErrors.content;
+
+      if (errorMessage ) {
+        toast.error(errorMessage[0]);
+      }
+    },
+  });
 
   const [input, setInput] = useState("");
 
@@ -41,17 +49,28 @@ const CreatePostWizard = () => {
         type="text"
         value={input}
         onChange={(e) => setInput(e.target.value)}
+        onKeyDown={(e) => {
+          if(e.key === "Enter"){
+            e.preventDefault()
+            mutate({ content: input });
+          }
+        }}  
         disabled={posting}
       />
 
-      <button
-        onClick={() => {
-          mutate({ content: input });
-        }}
-        
-      >
-        Post
-      </button>
+      {input !== "" && !posting && (
+        <button
+          onClick={() => {
+            mutate({ content: input });
+          }}
+        >
+          Post
+        </button>
+      )}
+
+      {posting && <div className="flex justify-center items-center">
+          <LoadingSpinner size={18}/>
+        </div>}
     </div>
   );
 };
