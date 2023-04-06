@@ -8,6 +8,7 @@ import Image from "next/image";
 import { LoadingPage, LoadingSpinner } from '~/components/loading';
 import { useState } from "react";
 import { toast } from "react-hot-toast";
+import { TRPCClientErrorBase } from "@trpc/client";
 
 dayjs.extend(relativeTime);
 
@@ -21,11 +22,13 @@ const CreatePostWizard = () => {
       setInput("");
       await ctx.post.getAll.invalidate();
     },
-    onError(e) {
-      const errorMessage = e.data?.zodError?.fieldErrors.content;
-
+    onError({data}) {
+      
+      const errorMessage = data?.zodError?.fieldErrors.content;
+      
       if (errorMessage ) {
-        toast.error(errorMessage[0]);
+        const msg = errorMessage[0] || "Something goes wrong"
+        toast.error(msg);
       }
     },
   });
