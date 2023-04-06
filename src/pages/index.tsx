@@ -5,6 +5,7 @@ import { RouterOutputs, api } from "~/utils/api";
 import relativeTime from "dayjs/plugin/relativeTime"
 import dayjs from "dayjs";
 import Image from "next/image";
+import { LoadingPage } from "~/components/loading";
 
 dayjs.extend(relativeTime)
 
@@ -57,14 +58,27 @@ const PostsView = ({ post , author}: PostWithUSer) => {
   );
 };
 
+const Feed = () => {
+  const { data, isLoading: postLoading } = api.post.getAll.useQuery();
+
+  if(postLoading) return <LoadingPage />
+
+  if(!data)  return <div className="text-2xl text-red-700">Something gone wrong</div>;
+
+  return(
+    <div>
+        {data?.map(({ post, author }) => <PostsView key={post.id} post={post} author={author}/>)}
+    </div>
+  )
+}
+
 const Home: NextPage = () => {
-  const { data, isLoading } = api.post.getAll.useQuery();
-  const { isSignedIn, user } = useUser();
+  const { isSignedIn, isLoaded : userLoaded} = useUser();
+ 
+  api.post.getAll.useQuery();
 
-  if (isLoading) return <div className="text-2xl">Loading...</div>;
+  if (!userLoaded) return <div/>;
 
-  if (!data)
-    return <div className="text-2xl text-red-700">Something gone wrong</div>;
 
   return (
     <>
@@ -84,11 +98,10 @@ const Home: NextPage = () => {
               </div>
             )}
 
-            {!!isSignedIn && <CreatePostWizard />}
+            {isSignedIn && <CreatePostWizard />}
 
           </div>
-
-          {data?.map(({ post, author }) => <PostsView key={post.id} post={post} author={author}/>)}
+          <Feed />
         </div>
       </main>
     </>
