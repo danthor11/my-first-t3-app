@@ -7,18 +7,33 @@ import superjson from "superjson";
 import { prisma } from "~/server/db";
 import { Layout } from "~/components/Layout";
 import Image from "next/image";
+import { LoadingSpinner } from "~/components/loading";
+import { PostWithUser, PostsView } from "../components/PostView";
 
+const ProfileFeed = (props: { userId: string }) => {
+  const { data, isLoading } = api.post.getPostByUserId.useQuery({
+    userId: props.userId,
+  });
+
+  if (isLoading) return <LoadingSpinner />;
+
+  if (!data || data.length === 0) return <div>User has not posted</div>;
+
+  return (
+    <div>
+      {data.map(({author,post}:PostWithUser) => (
+        <PostsView key={post.id} post={post} author={author} />
+      ))}
+    </div>
+  );
+};
 
 const ProfilePage: NextPage<{ username: string }> = ({ username }) => {
   const { data, isLoading } = api.profile.getUserByUsername.useQuery({
     username,
   });
 
-  console.log(username);
-
   if (!data) return <div />;
-
-  console.log(data);
   return (
     <>
       <Head>
@@ -34,17 +49,14 @@ const ProfilePage: NextPage<{ username: string }> = ({ username }) => {
             className="absolute bottom-0 left-0 -mb-[64px] ml-4 rounded-full border-2 border-black"
           />
         </div>
-        <div className="h-[64px]">
+        <div className="h-[64px]"/>
 
-        </div>
         <div className="p-4 text-2xl font-bold">
           {`@${data.username ?? ""}`}
         </div>
 
-        <div className="w-full border-b border-slate-400">
-
-        </div>
-
+        <div className="w-full border-b border-slate-400"/>
+          <ProfileFeed userId={data.id}/>
       </Layout>
     </>
   );
